@@ -1,4 +1,5 @@
 LIBPNG_VERSION ?= 1.6.37
+GHOSTSCRIPT_VERSION ?= 9.27
 LIBJPG_VERSION ?= 9c
 OPENJP2_VERSION ?= 2.3.1
 LIBTIFF_VERSION ?= 4.0.9
@@ -20,6 +21,26 @@ CONFIGURE = PKG_CONFIG_PATH=$(CACHE_DIR)/lib/pkgconfig \
 		--disable-shared \
 		--enable-static \
 		--prefix=$(CACHE_DIR)
+
+## ghostscript
+
+GS_SOURCE=ghostscript-$(GHOSTSCRIPT_VERSION).tar.gz
+
+$(GS_SOURCE):
+	curl -LO https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs927/$(GS_SOURCE)
+
+$(CACHE_DIR)/lib/ghostscript.a: $(GS_SOURCE)
+	tar xf $<
+	cd ghostscript*
+	PKG_CONFIG_PATH=$(CACHE_DIR)/lib/pkgconfig \
+	./configure \
+		LDFLAGS=-L$(CACHE_DIR)/lib \
+		--disable-dependency-tracking \
+		--disable-shared \
+		--enable-static \
+		--prefix=$(CACHE_DIR) 
+	make
+	make install
 
 ## libjpg
 
@@ -127,7 +148,8 @@ LIBS:=$(CACHE_DIR)/lib/libjpeg.a \
 	$(CACHE_DIR)/lib/libopenjp2.a \
 	$(CACHE_DIR)/lib/libtiff.a \
 	$(CACHE_DIR)/lib/libbz2.a \
-	$(CACHE_DIR)/lib/libwebp.a
+	$(CACHE_DIR)/lib/libwebp.a \
+	$(CACHE_DIR)/lib/ghostscript.a 
 
 $(TARGET_DIR)/bin/identify: $(IMAGE_MAGICK_SOURCE) $(LIBS)
 	tar xf $<
